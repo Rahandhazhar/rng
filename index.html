@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RNG Game</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RNG Collect & Trade</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div id="auth-container">
-  <h2>Login / Register</h2>
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
-  <div class="auth-buttons">
+  <h1 class="logo">RNG COLLECT</h1>
+  <input id="username" placeholder="Username" />
+  <input id="password" type="password" placeholder="Password" />
+  <div class="auth-row">
     <button id="login-btn">Login</button>
     <button id="register-btn">Register</button>
   </div>
@@ -21,43 +21,67 @@
 
 <div id="game-container" style="display:none;">
   <div id="top-bar">
-    <h2>Welcome, <span id="player-name"></span>!</h2>
-    <button id="logout-btn">Logout</button>
+    <div id="player-block">
+      <div id="player-name"></div>
+      <div id="equip-info">Equipped: <span id="equip-name">None</span></div>
+    </div>
+    <div id="top-actions">
+      <button id="logout-btn">Logout</button>
+    </div>
   </div>
 
-  <div id="main-game">
-    <div id="roll-panel">
-      <h3>Roll for Items</h3>
-      <button id="roll-btn">Roll</button>
-      <div id="roll-result">🎲 Roll Result Will Appear Here 🎲</div>
-    </div>
+  <main id="main-grid">
+    <section id="roll-panel" class="card">
+      <h2>Spin the Reel</h2>
+      <div id="slot-window">
+        <div id="slot-reel"></div>
+      </div>
+      <div id="roll-controls">
+        <button id="roll-btn">Roll</button>
+        <div id="roll-result">Ready to roll</div>
+      </div>
+      <div class="hint">Click Roll. Watch the reels slide. Rarer items glow.</div>
+    </section>
 
-    <div id="inventory-panel">
-      <h3>Your Inventory</h3>
-      <p id="equip-info">Equipped: None</p>
+    <section id="inventory-panel" class="card">
+      <h2>Your Inventory</h2>
       <ul id="inventory-list"></ul>
-      <button id="equip-btn">Equip Selected</button>
-    </div>
+      <div class="panel-row">
+        <button id="equip-btn">Equip Selected</button>
+        <button id="inspect-btn">Inspect</button>
+      </div>
+    </section>
 
-    <div id="trade-panel">
-      <h3>Trade Items</h3>
+    <section id="trade-panel" class="card">
+      <h2>Trade</h2>
+      <label for="trade-user">Choose player</label>
       <select id="trade-user"></select>
-      <button id="refresh-users">Refresh Users</button>
+      <div class="panel-row">
+        <button id="refresh-users">Refresh</button>
+        <button id="show-target-inv">Show Target</button>
+      </div>
+      <h3 class="small">Select item to send</h3>
       <ul id="trade-inventory"></ul>
-      <button id="send-trade">Send Selected Item</button>
-      <p id="trade-message"></p>
-    </div>
+      <div class="panel-row">
+        <button id="send-trade">Send Selected</button>
+        <button id="request-trade">Request Swap</button>
+      </div>
+      <div id="trade-message" class="small muted"></div>
+    </section>
 
-    <div id="chat-panel">
-      <h3>Global Chat</h3>
+    <section id="chat-panel" class="card">
+      <h2>Global Chat</h2>
       <div id="chat-box"></div>
-      <input type="text" id="chat-input" placeholder="Type a message...">
-      <button id="send-chat">Send</button>
-    </div>
-  </div>
+      <div id="chat-row">
+        <input id="chat-input" placeholder="Say something..." />
+        <button id="send-chat">Send</button>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script src="rng.js"></script>
 <script src="game.js"></script>
+<script src="extra.js"></script>
 </body>
 </html>
