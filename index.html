@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RNG Collect & Trade Pro</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RNG Collect & Trade Pro - Enhanced Edition</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div id="auth-container">
   <h1 class="logo">RNG COLLECT PRO</h1>
+  <p class="subtitle">Enhanced Edition - Collect, Trade, Dominate!</p>
   <input id="username" placeholder="Username" />
   <input id="password" type="password" placeholder="Password" />
   <div class="auth-row">
@@ -17,6 +21,20 @@
     <button id="register-btn">Register</button>
   </div>
   <p id="auth-message"></p>
+  <div class="features-preview">
+    <div class="feature-item">
+      <span class="feature-icon">🎲</span>
+      <span>Advanced RNG System</span>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">⚡</span>
+      <span>Epic Animations</span>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">🏆</span>
+      <span>Achievement System</span>
+    </div>
+  </div>
 </div>
 
 <div id="game-container" style="display:none;">
@@ -24,62 +42,86 @@
     <div id="player-block">
       <div id="player-name"></div>
       <div id="equip-info">Equipped: <span id="equip-name">None</span></div>
-      <div id="stats-info">Level: <span id="level-display">1</span> | XP: <span id="xp-display">0</span> | Coins: <span id="coins-display">0</span></div>
+      <div id="stats-info">
+        <span>Level: <span id="level-display">1</span></span>
+        <span>XP: <span id="xp-display">0</span></span>
+        <span>Coins: <span id="coins-display">0</span></span>
+      </div>
     </div>
     <div id="top-actions">
-      <button id="btn-shop" class="extra-top-btn">Shop</button>
-      <button id="btn-daily" class="extra-top-btn">Claim Daily</button>
-      <button id="btn-quests" class="extra-top-btn">Quests</button>
-      <button id="logout-btn">Logout</button>
+      <button id="btn-shop" class="extra-top-btn">🛒 Shop</button>
+      <button id="btn-daily" class="extra-top-btn">📅 Daily</button>
+      <button id="btn-quests" class="extra-top-btn">📋 Quests</button>
+      <button id="btn-achievements" class="extra-top-btn">🏆 Achievements</button>
+      <button id="logout-btn">🚪 Logout</button>
     </div>
   </div>
 
   <main id="main-grid">
     <section id="roll-panel" class="card">
-      <h2>Spin the Reel</h2>
+      <h2>🎰 Spin the Reel</h2>
       <div id="slot-window">
         <div id="slot-reel"></div>
         <div id="multiplier-display">1x</div>
       </div>
       <div id="roll-controls">
         <button id="roll-btn">Roll (10 coins)</button>
-        <button id="mega-roll-btn">Mega Roll (50 coins)</button>
+        <button id="mega-roll-btn">⚡ Mega Roll (50 coins)</button>
         <div id="roll-result">Ready to roll</div>
       </div>
       <div class="hint">Roll for items. Mega Roll has better odds!</div>
+      <div class="roll-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Rolls:</span>
+          <span id="total-rolls">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Best Item:</span>
+          <span id="best-item">None</span>
+        </div>
+      </div>
     </section>
 
     <section id="inventory-panel" class="card">
-      <h2>Your Inventory <span id="inventory-count">(0/50)</span></h2>
+      <h2>🎒 Your Inventory <span id="inventory-count">(0/50)</span></h2>
       <input id="inventory-filter" class="filter-input" placeholder="Filter by name or rarity..." />
       <ul id="inventory-list"></ul>
       <div class="panel-row">
-        <button id="equip-btn">Equip</button>
-        <button id="inspect-btn">Inspect</button>
-        <button id="sell-btn">Sell</button>
-        <button id="fusion-btn">Fuse Items</button>
+        <button id="equip-btn">⚔️ Equip</button>
+        <button id="inspect-btn">🔍 Inspect</button>
+        <button id="sell-btn">💰 Sell</button>
+        <button id="fusion-btn">🔮 Fuse Items</button>
+      </div>
+      <div class="inventory-stats">
+        <div class="rarity-count">
+          <span class="rarity-badge common">Common: <span id="common-count">0</span></span>
+          <span class="rarity-badge rare">Rare: <span id="rare-count">0</span></span>
+          <span class="rarity-badge epic">Epic: <span id="epic-count">0</span></span>
+          <span class="rarity-badge legendary">Legendary: <span id="legendary-count">0</span></span>
+        </div>
       </div>
     </section>
 
     <section id="trade-panel" class="card">
-      <h2>Trading Hub</h2>
+      <h2>🤝 Trading Hub</h2>
       <div id="trade-tabs">
         <button class="tab-btn active" data-tab="direct">Direct Trade</button>
         <button class="tab-btn" data-tab="market">Market</button>
+        <button class="tab-btn" data-tab="history">History</button>
       </div>
       
       <div id="direct-trade" class="tab-content active">
         <label for="trade-user">Choose player</label>
         <select id="trade-user"></select>
         <div class="panel-row">
-          <button id="refresh-users">Refresh</button>
-          <button id="show-target-inv">Show Target</button>
+          <button id="refresh-users">🔄 Refresh</button>
+          <button id="show-target-inv">👁️ Show Target</button>
         </div>
         <h3 class="small">Select item to trade</h3>
         <ul id="trade-inventory"></ul>
         <div class="panel-row">
-          <button id="send-trade">Send Gift</button>
-          <button id="request-trade">Request Trade</button>
+          <button id="send-trade">🎁 Send Gift</button>
+          <button id="request-trade">📤 Request Trade</button>
         </div>
       </div>
       
@@ -89,26 +131,41 @@
         <h3 class="small">List Your Item</h3>
         <div class="panel-row">
           <input id="list-price" type="number" placeholder="Price in coins" min="1" />
-          <button id="list-item">List Item</button>
+          <button id="list-item">📋 List Item</button>
         </div>
+      </div>
+      
+      <div id="history-trade" class="tab-content">
+        <h3 class="small">Trade History</h3>
+        <div id="trade-history"></div>
       </div>
       
       <div id="trade-message" class="small muted"></div>
     </section>
 
     <section id="chat-panel" class="card">
-      <h2>Global Chat</h2>
+      <h2>💬 Global Chat</h2>
       <div id="chat-box"></div>
       <div id="chat-row">
         <input id="chat-input" placeholder="Say something..." />
-        <button id="send-chat">Send</button>
+        <button id="send-chat">📤 Send</button>
+      </div>
+      <div class="chat-controls">
+        <button id="clear-chat" class="small-btn">Clear Chat</button>
+        <button id="toggle-sound" class="small-btn">🔊 Sound</button>
       </div>
     </section>
   </main>
 
+  <!-- Enhanced Modals -->
   <div id="shop-modal" class="modal-backdrop" style="display:none;">
     <div class="modal-content">
-      <h2>Item Shop</h2>
+      <h2>🛒 Item Shop</h2>
+      <div class="shop-categories">
+        <button class="category-btn active" data-category="all">All Items</button>
+        <button class="category-btn" data-category="consumable">Consumables</button>
+        <button class="category-btn" data-category="upgrade">Upgrades</button>
+      </div>
       <div id="shop-items"></div>
       <button id="close-shop">Close</button>
     </div>
@@ -116,23 +173,62 @@
 
   <div id="quests-modal" class="modal-backdrop" style="display:none;">
     <div class="modal-content">
-      <h2>Daily Quests</h2>
+      <h2>📋 Daily Quests</h2>
+      <div class="quest-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="quest-progress-fill"></div>
+        </div>
+        <span id="quest-progress-text">0/4 Completed</span>
+      </div>
       <div id="quest-list"></div>
       <button id="close-quests">Close</button>
     </div>
   </div>
 
+  <div id="achievements-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+      <h2>🏆 Achievements</h2>
+      <div id="achievements-list"></div>
+      <button id="close-achievements">Close</button>
+    </div>
+  </div>
+
   <div id="fusion-modal" class="modal-backdrop" style="display:none;">
     <div class="modal-content">
-      <h2>Item Fusion</h2>
+      <h2>🔮 Item Fusion</h2>
       <p>Select 3 items of the same rarity to fuse into a higher rarity item!</p>
       <div id="fusion-slots"></div>
+      <div class="fusion-preview">
+        <div class="preview-item" id="fusion-preview">
+          <span>Fusion Result</span>
+        </div>
+      </div>
       <div class="panel-row">
-        <button id="fusion-confirm">Fuse Items</button>
+        <button id="fusion-confirm">🔮 Fuse Items</button>
         <button id="fusion-cancel">Cancel</button>
       </div>
     </div>
   </div>
+
+  <div id="item-details-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+      <h2 id="item-details-title">Item Details</h2>
+      <div id="item-details-content"></div>
+      <button id="close-item-details">Close</button>
+    </div>
+  </div>
+
+  <!-- Notification System -->
+  <div id="notification-container"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" style="display:none;">
+    <div class="loading-spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Background Particles -->
+  <div id="particles-container"></div>
 </div>
 
 <script src="rng.js"></script>
