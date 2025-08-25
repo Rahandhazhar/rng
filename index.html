@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div id="auth-container">
   <h2>Login / Register</h2>
   <input type="text" id="username" placeholder="Username">
@@ -20,10 +21,22 @@
   <h2>Welcome, <span id="player-name"></span>!</h2>
   <button id="roll-btn">Roll for Item</button>
   <p id="roll-result"></p>
+  <p id="equip-info">Equipped: None</p>
+  <ul id="inventory-list"></ul>
+  <button id="equip-btn">Equip Selected</button>
   <button id="logout-btn">Logout</button>
+
+  <div id="trade-container">
+    <h3>Trade Items</h3>
+    <select id="trade-user"></select>
+    <button id="refresh-users">Refresh Users</button>
+    <ul id="trade-inventory"></ul>
+    <button id="send-trade">Send Trade</button>
+    <p id="trade-message"></p>
+  </div>
 </div>
 
-<script src="game.js"></script>
 <script src="rng.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
