@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>RNG Collect & Trade</title>
+<title>RNG Collect & Trade Pro</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div id="auth-container">
-  <h1 class="logo">RNG COLLECT</h1>
+  <h1 class="logo">RNG COLLECT PRO</h1>
   <input id="username" placeholder="Username" />
   <input id="password" type="password" placeholder="Password" />
   <div class="auth-row">
@@ -24,8 +24,12 @@
     <div id="player-block">
       <div id="player-name"></div>
       <div id="equip-info">Equipped: <span id="equip-name">None</span></div>
+      <div id="stats-info">Level: <span id="level-display">1</span> | XP: <span id="xp-display">0</span> | Coins: <span id="coins-display">0</span></div>
     </div>
     <div id="top-actions">
+      <button id="btn-shop" class="extra-top-btn">Shop</button>
+      <button id="btn-daily" class="extra-top-btn">Claim Daily</button>
+      <button id="btn-quests" class="extra-top-btn">Quests</button>
       <button id="logout-btn">Logout</button>
     </div>
   </div>
@@ -35,37 +39,60 @@
       <h2>Spin the Reel</h2>
       <div id="slot-window">
         <div id="slot-reel"></div>
+        <div id="multiplier-display">1x</div>
       </div>
       <div id="roll-controls">
-        <button id="roll-btn">Roll</button>
+        <button id="roll-btn">Roll (10 coins)</button>
+        <button id="mega-roll-btn">Mega Roll (50 coins)</button>
         <div id="roll-result">Ready to roll</div>
       </div>
-      <div class="hint">Click Roll. Watch the reels slide. Rarer items glow.</div>
+      <div class="hint">Roll for items. Mega Roll has better odds!</div>
     </section>
 
     <section id="inventory-panel" class="card">
-      <h2>Your Inventory</h2>
+      <h2>Your Inventory <span id="inventory-count">(0/50)</span></h2>
+      <input id="inventory-filter" class="filter-input" placeholder="Filter by name or rarity..." />
       <ul id="inventory-list"></ul>
       <div class="panel-row">
-        <button id="equip-btn">Equip Selected</button>
+        <button id="equip-btn">Equip</button>
         <button id="inspect-btn">Inspect</button>
+        <button id="sell-btn">Sell</button>
+        <button id="fusion-btn">Fuse Items</button>
       </div>
     </section>
 
     <section id="trade-panel" class="card">
-      <h2>Trade</h2>
-      <label for="trade-user">Choose player</label>
-      <select id="trade-user"></select>
-      <div class="panel-row">
-        <button id="refresh-users">Refresh</button>
-        <button id="show-target-inv">Show Target</button>
+      <h2>Trading Hub</h2>
+      <div id="trade-tabs">
+        <button class="tab-btn active" data-tab="direct">Direct Trade</button>
+        <button class="tab-btn" data-tab="market">Market</button>
       </div>
-      <h3 class="small">Select item to send</h3>
-      <ul id="trade-inventory"></ul>
-      <div class="panel-row">
-        <button id="send-trade">Send Selected</button>
-        <button id="request-trade">Request Swap</button>
+      
+      <div id="direct-trade" class="tab-content active">
+        <label for="trade-user">Choose player</label>
+        <select id="trade-user"></select>
+        <div class="panel-row">
+          <button id="refresh-users">Refresh</button>
+          <button id="show-target-inv">Show Target</button>
+        </div>
+        <h3 class="small">Select item to trade</h3>
+        <ul id="trade-inventory"></ul>
+        <div class="panel-row">
+          <button id="send-trade">Send Gift</button>
+          <button id="request-trade">Request Trade</button>
+        </div>
       </div>
+      
+      <div id="market-trade" class="tab-content">
+        <h3 class="small">Market Listings</h3>
+        <div id="market-listings"></div>
+        <h3 class="small">List Your Item</h3>
+        <div class="panel-row">
+          <input id="list-price" type="number" placeholder="Price in coins" min="1" />
+          <button id="list-item">List Item</button>
+        </div>
+      </div>
+      
       <div id="trade-message" class="small muted"></div>
     </section>
 
@@ -78,6 +105,34 @@
       </div>
     </section>
   </main>
+
+  <div id="shop-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+      <h2>Item Shop</h2>
+      <div id="shop-items"></div>
+      <button id="close-shop">Close</button>
+    </div>
+  </div>
+
+  <div id="quests-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+      <h2>Daily Quests</h2>
+      <div id="quest-list"></div>
+      <button id="close-quests">Close</button>
+    </div>
+  </div>
+
+  <div id="fusion-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+      <h2>Item Fusion</h2>
+      <p>Select 3 items of the same rarity to fuse into a higher rarity item!</p>
+      <div id="fusion-slots"></div>
+      <div class="panel-row">
+        <button id="fusion-confirm">Fuse Items</button>
+        <button id="fusion-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="rng.js"></script>
