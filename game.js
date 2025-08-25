@@ -1,5 +1,6 @@
 // Enhanced Game Logic with Better Animations and Features
 
+// DOM Elements
 const loginBtn = document.getElementById("login-btn");
 const registerBtn = document.getElementById("register-btn");
 const logoutBtn = document.getElementById("logout-btn");
@@ -35,20 +36,48 @@ const sendChat = document.getElementById("send-chat");
 const shopBtn = document.getElementById("btn-shop");
 const dailyBtn = document.getElementById("btn-daily");
 const questsBtn = document.getElementById("btn-quests");
+const achievementsBtn = document.getElementById("btn-achievements");
+const clearChatBtn = document.getElementById("clear-chat");
+const toggleSoundBtn = document.getElementById("toggle-sound");
 
+// Game State
 let currentUser = null;
 let selectedFusionItems = [];
 let lastRolledItem = null;
 let rollHistory = [];
 let animationQueue = [];
+let soundEnabled = true;
+let tradeHistory = [];
+let achievements = [];
+let dailyStreak = 0;
+let lastLoginDate = null;
+let gameStats = {
+  totalRolls: 0,
+  totalTrades: 0,
+  totalSales: 0,
+  legendaryFound: 0,
+  epicFound: 0,
+  rareFound: 0,
+  bestItem: null
+};
 
 // Enhanced User Management
 function loadUsers() {
-  return JSON.parse(localStorage.getItem("users") || "{}");
+  try {
+    return JSON.parse(localStorage.getItem("users") || "{}");
+  } catch (e) {
+    console.error("Error loading users:", e);
+    return {};
+  }
 }
 
 function saveUsers(u) {
-  localStorage.setItem("users", JSON.stringify(u));
+  try {
+    localStorage.setItem("users", JSON.stringify(u));
+  } catch (e) {
+    console.error("Error saving users:", e);
+    showNotification("Error saving data", "error");
+  }
 }
 
 function getInventory(u) {
@@ -77,6 +106,8 @@ function ensureUserStats(username) {
   const users = loadUsers();
   if (!users[username]) users[username] = {};
   const user = users[username];
+  
+  // Initialize all required fields
   if (typeof user.level !== 'number') user.level = 1;
   if (typeof user.xp !== 'number') user.xp = 0;
   if (typeof user.coins !== 'number') user.coins = 100;
@@ -90,10 +121,97 @@ function ensureUserStats(username) {
     totalSales: 0,
     legendaryFound: 0,
     epicFound: 0,
-    rareFound: 0
+    rareFound: 0,
+    bestItem: null
   };
+  if (!user.tradeHistory) user.tradeHistory = [];
+  if (!user.rollHistory) user.rollHistory = [];
+  if (typeof user.dailyStreak !== 'number') user.dailyStreak = 0;
+  if (!user.lastLoginDate) user.lastLoginDate = null;
+  
   saveUsers(users);
   return user;
+}
+
+// Utility Functions
+function showNotification(message, type = "info") {
+  const container = document.getElementById("notification-container");
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  
+  container.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = "slideOutRight 0.3s ease forwards";
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+function playSound(type = "success") {
+  if (!soundEnabled) return;
+  
+  // Create audio context for sound effects
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  switch(type) {
+    case "success":
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+      break;
+    case "error":
+      oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.1);
+      break;
+    case "legendary":
+      oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+      break;
+  }
+  
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+  
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.3);
+}
+
+function updateRarityCounts() {
+  const inv = getInventory(currentUser);
+  const counts = {
+    common: 0,
+    rare: 0,
+    epic: 0,
+    legendary: 0
+  };
+  
+  inv.forEach(item => {
+    if (counts.hasOwnProperty(item.rarity)) {
+      counts[item.rarity]++;
+    }
+  });
+  
+  document.getElementById("common-count").textContent = counts.common;
+  document.getElementById("rare-count").textContent = counts.rare;
+  document.getElementById("epic-count").textContent = counts.epic;
+  document.getElementById("legendary-count").textContent = counts.legendary;
+}
+
+function updateRollStats() {
+  const user = ensureUserStats(currentUser);
+  document.getElementById("total-rolls").textContent = user.stats.totalRolls;
+  
+  if (user.stats.bestItem) {
+    document.getElementById("best-item").textContent = user.stats.bestItem.name;
+  } else {
+    document.getElementById("best-item").textContent = "None";
+  }
 }
 
 // Enhanced Display Updates
@@ -110,33 +228,66 @@ function updateDisplays() {
   const eq = getEquipped(currentUser);
   equipName.textContent = eq ? `${eq.name} (${eq.rarity})` : "None";
   
-  // Update streak display
+  // Update all stats
+  updateRarityCounts();
+  updateRollStats();
   updateStreakDisplay();
+  updateQuestProgress();
 }
 
 function updateStreakDisplay() {
   const users = loadUsers();
   const user = users[currentUser];
-  if (user && user.loginStreak) {
+  if (user && user.dailyStreak) {
     const streakElement = document.getElementById("login-streak");
     if (!streakElement) {
       const streakDiv = document.createElement("div");
       streakDiv.id = "login-streak";
-      streakDiv.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        box-shadow: 0 4px 15px rgba(238,90,82,0.3);
-      `;
+      streakDiv.className = "streak-counter";
       document.getElementById("game-container").appendChild(streakDiv);
     }
-    streakElement.textContent = `🔥 ${user.loginStreak} day streak`;
+    streakElement.textContent = `🔥 ${user.dailyStreak} day streak`;
+  }
+}
+
+function updateQuestProgress() {
+  const users = loadUsers();
+  const user = users[currentUser];
+  if (!user || !user.quests) return;
+  
+  const completed = user.quests.filter(q => q.completed).length;
+  const total = user.quests.length;
+  const progressFill = document.getElementById("quest-progress-fill");
+  const progressText = document.getElementById("quest-progress-text");
+  
+  if (progressFill && progressText) {
+    const percentage = total > 0 ? (completed / total) * 100 : 0;
+    progressFill.style.width = `${percentage}%`;
+    progressText.textContent = `${completed}/${total} Completed`;
+  }
+}
+
+function createParticleEffect(x, y, color = "#ffd700") {
+  for (let i = 0; i < 8; i++) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+    particle.style.left = x + "px";
+    particle.style.top = y + "px";
+    particle.style.background = color;
+    document.body.appendChild(particle);
+    
+    const angle = (i / 8) * Math.PI * 2;
+    const distance = 50 + Math.random() * 50;
+    const targetX = x + Math.cos(angle) * distance;
+    const targetY = y + Math.sin(angle) * distance;
+    
+    particle.animate([
+      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+      { transform: `translate(${targetX - x}px, ${targetY - y}px) scale(0)`, opacity: 0 }
+    ], {
+      duration: 1000,
+      easing: 'ease-out'
+    }).onfinish = () => particle.remove();
   }
 }
 
@@ -347,50 +498,109 @@ function createParticleEffect(element) {
   }
 }
 
-// Achievement System
+// Enhanced Achievement System
 function checkAchievements() {
   const users = loadUsers();
   const user = users[currentUser];
   if (!user) return;
   
   const achievements = [
-    { id: "first_legendary", name: "Legendary Hunter", desc: "Find your first legendary item", condition: () => user.stats.legendaryFound >= 1 },
-    { id: "roll_master", name: "Roll Master", desc: "Roll 100 times", condition: () => user.stats.totalRolls >= 100 },
-    { id: "trade_king", name: "Trade King", desc: "Complete 50 trades", condition: () => user.stats.totalTrades >= 50 },
-    { id: "level_10", name: "Veteran", desc: "Reach level 10", condition: () => user.level >= 10 },
-    { id: "rich_player", name: "Rich Player", desc: "Have 1000 coins", condition: () => user.coins >= 1000 }
+    { id: "first_legendary", name: "Legendary Hunter", desc: "Find your first legendary item", reward: 200, condition: () => user.stats.legendaryFound >= 1 },
+    { id: "roll_master", name: "Roll Master", desc: "Roll 100 times", reward: 150, condition: () => user.stats.totalRolls >= 100 },
+    { id: "trade_king", name: "Trade King", desc: "Complete 50 trades", reward: 200, condition: () => user.stats.totalTrades >= 50 },
+    { id: "level_10", name: "Veteran", desc: "Reach level 10", reward: 300, condition: () => user.level >= 10 },
+    { id: "rich_player", name: "Rich Player", desc: "Have 1000 coins", reward: 100, condition: () => user.coins >= 1000 },
+    { id: "epic_collector", name: "Epic Collector", desc: "Find 10 epic items", reward: 250, condition: () => user.stats.epicFound >= 10 },
+    { id: "rare_hunter", name: "Rare Hunter", desc: "Find 25 rare items", reward: 200, condition: () => user.stats.rareFound >= 25 },
+    { id: "streak_master", name: "Streak Master", desc: "7-day login streak", reward: 500, condition: () => user.dailyStreak >= 7 },
+    { id: "fusion_master", name: "Fusion Master", desc: "Fuse 10 items", reward: 300, condition: () => (user.stats.fusions || 0) >= 10 },
+    { id: "market_trader", name: "Market Trader", desc: "Buy 20 items from market", reward: 200, condition: () => (user.stats.marketBuys || 0) >= 20 }
   ];
   
   achievements.forEach(achievement => {
     if (!user.achievements.includes(achievement.id) && achievement.condition()) {
       user.achievements.push(achievement.id);
-      user.coins += 100;
-      broadcastChat(`🏆 ${currentUser} unlocked achievement: ${achievement.name}! (+100 coins)`, true);
-      showAchievementPopup(achievement.name);
+      user.coins += achievement.reward;
+      broadcastChat(`🏆 ${currentUser} unlocked achievement: ${achievement.name}! (+${achievement.reward} coins)`, true);
+      showAchievementPopup(achievement.name, achievement.reward);
+      playSound("success");
     }
   });
   
   saveUsers(users);
 }
 
-function showAchievementPopup(achievementName) {
+function showAchievementPopup(achievementName, reward) {
   const popup = document.createElement("div");
-  popup.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #4ade80, #22c55e);
-    color: white;
-    padding: 16px 20px;
-    border-radius: 12px;
-    font-weight: 700;
-    box-shadow: 0 8px 25px rgba(34,197,94,0.4);
-    z-index: 10000;
-    animation: slideInRight 0.5s ease-out forwards;
-  `;
-  popup.innerHTML = `🏆 Achievement Unlocked: ${achievementName}!`;
+  popup.className = "achievement-popup";
+  popup.innerHTML = `🏆 Achievement Unlocked: ${achievementName}!<br><small>+${reward} coins</small>`;
   document.body.appendChild(popup);
-  setTimeout(() => popup.remove(), 3000);
+  setTimeout(() => popup.remove(), 4000);
+}
+
+function displayAchievements() {
+  const container = document.getElementById("achievements-list");
+  const users = loadUsers();
+  const user = users[currentUser];
+  
+  if (!user) return;
+  
+  const allAchievements = [
+    { id: "first_legendary", name: "Legendary Hunter", desc: "Find your first legendary item", reward: 200 },
+    { id: "roll_master", name: "Roll Master", desc: "Roll 100 times", reward: 150 },
+    { id: "trade_king", name: "Trade King", desc: "Complete 50 trades", reward: 200 },
+    { id: "level_10", name: "Veteran", desc: "Reach level 10", reward: 300 },
+    { id: "rich_player", name: "Rich Player", desc: "Have 1000 coins", reward: 100 },
+    { id: "epic_collector", name: "Epic Collector", desc: "Find 10 epic items", reward: 250 },
+    { id: "rare_hunter", name: "Rare Hunter", desc: "Find 25 rare items", reward: 200 },
+    { id: "streak_master", name: "Streak Master", desc: "7-day login streak", reward: 500 },
+    { id: "fusion_master", name: "Fusion Master", desc: "Fuse 10 items", reward: 300 },
+    { id: "market_trader", name: "Market Trader", desc: "Buy 20 items from market", reward: 200 }
+  ];
+  
+  container.innerHTML = "";
+  
+  allAchievements.forEach(achievement => {
+    const isUnlocked = user.achievements.includes(achievement.id);
+    const div = document.createElement("div");
+    div.className = `achievement-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+    div.innerHTML = `
+      <div class="achievement-info">
+        <h4>${achievement.name}</h4>
+        <p>${achievement.desc}</p>
+        <small>Reward: ${achievement.reward} coins</small>
+      </div>
+      <div class="achievement-status">
+        ${isUnlocked ? '✅ Unlocked' : '🔒 Locked'}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// Enhanced Shop System
+function displayShop(category = "all") {
+  const container = document.getElementById("shop-items");
+  container.innerHTML = "";
+  
+  let filteredItems = shopItems;
+  if (category !== "all") {
+    filteredItems = shopItems.filter(item => item.type === category);
+  }
+  
+  filteredItems.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "shop-item";
+    div.innerHTML = `
+      <div>
+        <strong>${item.name}</strong>
+        <p>${item.desc}</p>
+        <small>Cost: ${item.cost} coins</small>
+      </div>
+      <button onclick="buyShopItem('${item.effect}', ${item.cost}, '${item.name}')" class="buy-btn">Buy</button>
+    `;
+    container.appendChild(div);
+  });
 }
 
 // Enhanced Slot Machine Animation
@@ -447,6 +657,8 @@ rollBtn.addEventListener("click", async () => {
   const user = ensureUserStats(currentUser);
   if (user.coins < 10) {
     rollResult.textContent = "Not enough coins!";
+    showNotification("Not enough coins for roll!", "error");
+    playSound("error");
     return;
   }
   
@@ -454,20 +666,35 @@ rollBtn.addEventListener("click", async () => {
   rollResult.textContent = "Spinning...";
   multiplierDisplay.textContent = "1x";
   
+  // Create loading effect
+  const rect = rollBtn.getBoundingClientRect();
+  createParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, "#6366f1");
+  
   user.coins -= 10;
   user.stats.totalRolls = (user.stats.totalRolls || 0) + 1;
   
   const final = rollItem();
   lastRolledItem = final;
-  rollHistory.push(final);
+  user.rollHistory = user.rollHistory || [];
+  user.rollHistory.push({
+    item: final,
+    timestamp: new Date().toISOString()
+  });
   
   await animateReel(final);
+  
+  // Update best item if necessary
+  if (!user.stats.bestItem || final.value > user.stats.bestItem.value) {
+    user.stats.bestItem = final;
+  }
   
   rollResult.innerHTML = `You got <span class="${getRarityClass(final.rarity)}">${final.name}</span>!`;
   
   const inv = getInventory(currentUser);
   if (inv.length >= user.maxInventory) {
     rollResult.textContent = "Inventory full! Sell items to make space.";
+    showNotification("Inventory is full!", "error");
+    playSound("error");
     rollBtn.disabled = false;
     return;
   }
@@ -475,16 +702,24 @@ rollBtn.addEventListener("click", async () => {
   inv.push(final);
   saveInventory(currentUser, inv);
   
-  // Update stats
+  // Update stats and quests
   if (final.rarity === 'legendary') {
     user.stats.legendaryFound = (user.stats.legendaryFound || 0) + 1;
     updateQuestProgress(currentUser, "collect_legendary");
+    playSound("legendary");
+    showNotification("🎉 LEGENDARY ITEM FOUND!", "success");
+    createParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, "#ffd700");
   } else if (final.rarity === 'epic') {
     user.stats.epicFound = (user.stats.epicFound || 0) + 1;
     updateQuestProgress(currentUser, "collect_epic");
+    playSound("success");
+    showNotification("Epic item found!", "info");
   } else if (final.rarity === 'rare') {
     user.stats.rareFound = (user.stats.rareFound || 0) + 1;
     updateQuestProgress(currentUser, "collect_rare");
+    playSound("success");
+  } else {
+    playSound("success");
   }
   
   updateQuestProgress(currentUser, "roll");
@@ -669,15 +904,32 @@ function showSellEffect(item, value) {
 registerBtn.addEventListener("click", () => {
   const u = document.getElementById("username").value.trim();
   const p = document.getElementById("password").value.trim();
+  
   if (!u || !p) {
     authMessage.textContent = "Fill both fields";
+    playSound("error");
     return;
   }
+  
+  if (u.length < 3) {
+    authMessage.textContent = "Username must be at least 3 characters";
+    playSound("error");
+    return;
+  }
+  
+  if (p.length < 3) {
+    authMessage.textContent = "Password must be at least 3 characters";
+    playSound("error");
+    return;
+  }
+  
   const users = loadUsers();
   if (users[u]) {
-    authMessage.textContent = "User exists";
+    authMessage.textContent = "User already exists";
+    playSound("error");
     return;
   }
+  
   users[u] = {
     password: p,
     inventory: [],
@@ -692,44 +944,120 @@ registerBtn.addEventListener("click", () => {
       totalSales: 0,
       legendaryFound: 0,
       epicFound: 0,
-      rareFound: 0
+      rareFound: 0,
+      bestItem: null
     },
-    achievements: []
+    achievements: [],
+    tradeHistory: [],
+    rollHistory: [],
+    dailyStreak: 0,
+    lastLoginDate: null
   };
+  
   saveUsers(users);
   authMessage.textContent = "Registered successfully!";
+  playSound("success");
+  showNotification("Account created successfully!", "success");
   populateTradeUsers();
 });
 
 loginBtn.addEventListener("click", () => {
   const u = document.getElementById("username").value.trim();
   const p = document.getElementById("password").value.trim();
+  
+  if (!u || !p) {
+    authMessage.textContent = "Fill both fields";
+    playSound("error");
+    return;
+  }
+  
   const users = loadUsers();
   if (users[u] && users[u].password === p) {
     currentUser = u;
-    ensureUserStats(currentUser);
-    updateLoginStreak(currentUser);
+    const user = ensureUserStats(currentUser);
+    
+    // Update login streak
+    const today = new Date().toDateString();
+    if (user.lastLoginDate !== today) {
+      if (user.lastLoginDate === new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString()) {
+        user.dailyStreak = (user.dailyStreak || 0) + 1;
+      } else {
+        user.dailyStreak = 1;
+      }
+      user.lastLoginDate = today;
+      saveUsers(users);
+    }
+    
     authContainer.style.display = "none";
     gameContainer.style.display = "block";
     playerNameDisplay.textContent = currentUser;
+    
     displayInventory();
     populateTradeUsers();
     updateQuestProgress(currentUser, "login");
     broadcastChat(`${currentUser} entered the realm`, true);
     updateDisplays();
     checkAchievements();
+    
+    playSound("success");
+    showNotification(`Welcome back, ${currentUser}!`, "success");
+    
+    // Show streak notification
+    if (user.dailyStreak >= 7) {
+      showNotification(`🔥 ${user.dailyStreak}-day login streak!`, "info");
+    }
   } else {
     authMessage.textContent = "Invalid credentials";
+    playSound("error");
   }
 });
 
 logoutBtn.addEventListener("click", () => {
-  broadcastChat(`${currentUser} left the realm`, true);
+  if (currentUser) {
+    broadcastChat(`${currentUser} left the realm`, true);
+  }
   currentUser = null;
   authContainer.style.display = "block";
   gameContainer.style.display = "none";
   document.getElementById("username").value = "";
   document.getElementById("password").value = "";
+  authMessage.textContent = "";
+});
+
+// New Event Listeners
+if (clearChatBtn) {
+  clearChatBtn.addEventListener("click", () => {
+    chatBox.innerHTML = "";
+    showNotification("Chat cleared", "info");
+  });
+}
+
+if (toggleSoundBtn) {
+  toggleSoundBtn.addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    toggleSoundBtn.textContent = soundEnabled ? "🔊 Sound" : "🔇 Sound";
+    showNotification(soundEnabled ? "Sound enabled" : "Sound disabled", "info");
+  });
+}
+
+if (achievementsBtn) {
+  achievementsBtn.addEventListener("click", () => {
+    document.getElementById("achievements-modal").style.display = "flex";
+    displayAchievements();
+  });
+}
+
+document.getElementById("close-achievements")?.addEventListener("click", () => {
+  document.getElementById("achievements-modal").style.display = "none";
+});
+
+// Shop category buttons
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("category-btn")) {
+    document.querySelectorAll(".category-btn").forEach(btn => btn.classList.remove("active"));
+    e.target.classList.add("active");
+    displayShop(e.target.dataset.category);
+  }
 });
 
 // Enhanced Event Listeners
@@ -1070,6 +1398,98 @@ document.getElementById("fusion-confirm").addEventListener("click", () => {
   updateQuestProgress(currentUser, "fuse");
 });
 
+// Enhanced Mega Roll
+megaRollBtn.addEventListener("click", async () => {
+  if (!currentUser) return;
+  const user = ensureUserStats(currentUser);
+  if (user.coins < 50) {
+    rollResult.textContent = "Not enough coins for Mega Roll!";
+    showNotification("Not enough coins for Mega Roll!", "error");
+    playSound("error");
+    return;
+  }
+  
+  megaRollBtn.disabled = true;
+  rollResult.textContent = "MEGA SPINNING...";
+  multiplierDisplay.textContent = "3x";
+  
+  // Enhanced mega roll effect
+  const rect = megaRollBtn.getBoundingClientRect();
+  createParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, "#f59e0b");
+  
+  user.coins -= 50;
+  user.stats.totalRolls = (user.stats.totalRolls || 0) + 1;
+  
+  const final = rollItem(true);
+  lastRolledItem = final;
+  user.rollHistory = user.rollHistory || [];
+  user.rollHistory.push({
+    item: final,
+    timestamp: new Date().toISOString(),
+    mega: true
+  });
+  
+  await animateReel(final);
+  
+  // Update best item if necessary
+  if (!user.stats.bestItem || final.value > user.stats.bestItem.value) {
+    user.stats.bestItem = final;
+  }
+  
+  rollResult.innerHTML = `MEGA ROLL: <span class="${getRarityClass(final.rarity)}">${final.name}</span>!`;
+  
+  const inv = getInventory(currentUser);
+  if (inv.length >= user.maxInventory) {
+    rollResult.textContent = "Inventory full! Sell items to make space.";
+    showNotification("Inventory is full!", "error");
+    playSound("error");
+    megaRollBtn.disabled = false;
+    return;
+  }
+  
+  inv.push(final);
+  saveInventory(currentUser, inv);
+  
+  // Enhanced rewards for mega roll
+  if (final.rarity === 'legendary') {
+    user.stats.legendaryFound = (user.stats.legendaryFound || 0) + 1;
+    updateQuestProgress(currentUser, "collect_legendary");
+    playSound("legendary");
+    showNotification("🎉 MEGA LEGENDARY!", "success");
+    createParticleEffect(rect.left + rect.width / 2, rect.top + rect.height / 2, "#ffd700");
+  } else if (final.rarity === 'epic') {
+    user.stats.epicFound = (user.stats.epicFound || 0) + 1;
+    updateQuestProgress(currentUser, "collect_epic");
+    playSound("success");
+    showNotification("Mega Epic item!", "info");
+  } else if (final.rarity === 'rare') {
+    user.stats.rareFound = (user.stats.rareFound || 0) + 1;
+    updateQuestProgress(currentUser, "collect_rare");
+    playSound("success");
+  } else {
+    playSound("success");
+  }
+  
+  updateQuestProgress(currentUser, "roll");
+  
+  // Apply item effects
+  if (final.effect) {
+    applyItemEffect(final, currentUser);
+  }
+  
+  awardXP(final.rarity === 'legendary' ? 50 : final.rarity === 'epic' ? 30 : final.rarity === 'rare' ? 20 : 10);
+  
+  displayInventory();
+  broadcastChat(`${currentUser} MEGA rolled ${final.name} (${final.rarity})`, true);
+  
+  const users = loadUsers();
+  users[currentUser] = user;
+  saveUsers(users);
+  
+  checkAchievements();
+  megaRollBtn.disabled = false;
+});
+
 // Initialize
 document.addEventListener("DOMContentLoaded", () => {
   populateTradeUsers();
@@ -1089,9 +1509,14 @@ document.addEventListener("DOMContentLoaded", () => {
         totalSales: 0,
         legendaryFound: 0,
         epicFound: 0,
-        rareFound: 0
+        rareFound: 0,
+        bestItem: null
       },
-      achievements: []
+      achievements: [],
+      tradeHistory: [],
+      rollHistory: [],
+      dailyStreak: 0,
+      lastLoginDate: null
     };
     demo["Bob"] = {
       password: "b",
@@ -1107,11 +1532,33 @@ document.addEventListener("DOMContentLoaded", () => {
         totalSales: 0,
         legendaryFound: 0,
         epicFound: 0,
-        rareFound: 0
+        rareFound: 0,
+        bestItem: null
       },
-      achievements: []
+      achievements: [],
+      tradeHistory: [],
+      rollHistory: [],
+      dailyStreak: 0,
+      lastLoginDate: null
     };
     saveUsers(demo);
   }
   populateTradeUsers();
+  
+  // Initialize background particles
+  initBackgroundParticles();
 });
+
+function initBackgroundParticles() {
+  const container = document.getElementById("particles-container");
+  if (!container) return;
+  
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+    particle.style.left = Math.random() * 100 + "%";
+    particle.style.top = Math.random() * 100 + "%";
+    particle.style.animationDelay = Math.random() * 3 + "s";
+    container.appendChild(particle);
+  }
+}
