@@ -12,27 +12,48 @@
   <h2>Login / Register</h2>
   <input type="text" id="username" placeholder="Username">
   <input type="password" id="password" placeholder="Password">
-  <button id="login-btn">Login</button>
-  <button id="register-btn">Register</button>
+  <div class="auth-buttons">
+    <button id="login-btn">Login</button>
+    <button id="register-btn">Register</button>
+  </div>
   <p id="auth-message"></p>
 </div>
 
 <div id="game-container" style="display:none;">
-  <h2>Welcome, <span id="player-name"></span>!</h2>
-  <button id="roll-btn">Roll for Item</button>
-  <p id="roll-result"></p>
-  <p id="equip-info">Equipped: None</p>
-  <ul id="inventory-list"></ul>
-  <button id="equip-btn">Equip Selected</button>
-  <button id="logout-btn">Logout</button>
+  <div id="top-bar">
+    <h2>Welcome, <span id="player-name"></span>!</h2>
+    <button id="logout-btn">Logout</button>
+  </div>
 
-  <div id="trade-container">
-    <h3>Trade Items</h3>
-    <select id="trade-user"></select>
-    <button id="refresh-users">Refresh Users</button>
-    <ul id="trade-inventory"></ul>
-    <button id="send-trade">Send Trade</button>
-    <p id="trade-message"></p>
+  <div id="main-game">
+    <div id="roll-panel">
+      <h3>Roll for Items</h3>
+      <button id="roll-btn">Roll</button>
+      <div id="roll-result">🎲 Roll Result Will Appear Here 🎲</div>
+    </div>
+
+    <div id="inventory-panel">
+      <h3>Your Inventory</h3>
+      <p id="equip-info">Equipped: None</p>
+      <ul id="inventory-list"></ul>
+      <button id="equip-btn">Equip Selected</button>
+    </div>
+
+    <div id="trade-panel">
+      <h3>Trade Items</h3>
+      <select id="trade-user"></select>
+      <button id="refresh-users">Refresh Users</button>
+      <ul id="trade-inventory"></ul>
+      <button id="send-trade">Send Selected Item</button>
+      <p id="trade-message"></p>
+    </div>
+
+    <div id="chat-panel">
+      <h3>Global Chat</h3>
+      <div id="chat-box"></div>
+      <input type="text" id="chat-input" placeholder="Type a message...">
+      <button id="send-chat">Send</button>
+    </div>
   </div>
 </div>
 
