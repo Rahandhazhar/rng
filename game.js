@@ -1,4 +1,4 @@
-// Game.js - Game logic for game.html only
+// Fixed Game.js - Game logic for game.html only
 
 // Global Variables
 let currentUser = null;
@@ -102,18 +102,6 @@ function showPanel(panelName) {
     case 'trade':
       updateTradePanel();
       break;
-    case 'chat':
-      updateChatPanel();
-      break;
-    case 'shop':
-      updateShopPanel();
-      break;
-    case 'quests':
-      updateQuestsPanel();
-      break;
-    case 'achievements':
-      updateAchievementsPanel();
-      break;
     case 'characters':
       updateCharactersPanel();
       break;
@@ -122,6 +110,9 @@ function showPanel(panelName) {
       break;
     case 'bosses':
       updateBossesPanel();
+      break;
+    case 'shop':
+      updateShopPanel();
       break;
   }
 }
@@ -171,10 +162,8 @@ function rollItem() {
   }
   
   // Check if user has free spins
-  let usedFreeSpin = false;
-  if (user.freeSpins > 0) {
+  if ((user.freeSpins || 0) > 0) {
     user.freeSpins--;
-    usedFreeSpin = true;
     showNotification('🎲 Used a free spin!', 'success');
   } else {
     showNotification('No free spins remaining! Use paid spins for exclusive characters.', 'info');
@@ -187,10 +176,16 @@ function rollItem() {
   
   let rolledItem;
   
+  // Check if ANIME_BANNERS is available
+  if (!window.ANIME_BANNERS) {
+    showNotification('Game data not loaded properly. Please refresh the page.', 'error');
+    return;
+  }
+  
   if (currentBanner === 'anime') {
-    rolledItem = window.ANIME_BANNERS?.getRandomCharacter();
+    rolledItem = window.ANIME_BANNERS.getRandomCharacter();
   } else {
-    rolledItem = window.ANIME_BANNERS?.getRandomAura();
+    rolledItem = window.ANIME_BANNERS.getRandomAura();
   }
   
   if (rolledItem) {
@@ -203,7 +198,7 @@ function rollItem() {
         showNotification(`🎭 Got ${rolledItem.name} (${rolledItem.rarity})!`, "success");
       } else {
         showNotification(`🎭 Duplicate ${rolledItem.name}! +50 coins`, "info");
-        user.coins += 50;
+        user.coins = (user.coins || 0) + 50;
       }
     } else {
       user.auras = user.auras || [];
@@ -213,7 +208,7 @@ function rollItem() {
         showNotification(`✨ Got ${rolledItem.name} (${rolledItem.rarity})!`, "success");
       } else {
         showNotification(`✨ Duplicate ${rolledItem.name}! +50 coins`, "info");
-        user.coins += 50;
+        user.coins = (user.coins || 0) + 50;
       }
     }
   }
@@ -248,18 +243,18 @@ function paidRoll() {
   }
   
   // Check if user has enough coins
-  if (user.coins < 50) {
+  if ((user.coins || 0) < 50) {
     showNotification("Not enough coins! Need 50 coins for paid spins.", "error");
     return;
   }
   
-  user.coins -= 50;
+  user.coins = (user.coins || 0) - 50;
   
   // Update stats
   user.stats = user.stats || {};
   user.stats.totalRolls = (user.stats.totalRolls || 0) + 1;
   
-  // Get exclusive character (higher chances for rare characters)
+  // Get exclusive character
   let rolledItem = getExclusiveCharacter();
   
   if (rolledItem) {
@@ -271,21 +266,23 @@ function paidRoll() {
       showNotification(`🌟 EXCLUSIVE! Got ${rolledItem.name} (${rolledItem.rarity})!`, "success");
     } else {
       showNotification(`🌟 Duplicate ${rolledItem.name}! +100 coins`, "info");
-      user.coins += 100;
+      user.coins = (user.coins || 0) + 100;
     }
   }
   
   saveUsers(users);
   updateRollPanel();
   updateDisplays();
-  
-  // Play sound
   playSound("success");
 }
 
 // Get Exclusive Character with Higher Rarity Chances
 function getExclusiveCharacter() {
-  const characters = window.ANIME_BANNERS?.characters || [];
+  if (!window.ANIME_BANNERS || !window.ANIME_BANNERS.characters) {
+    return null;
+  }
+  
+  const characters = window.ANIME_BANNERS.characters;
   
   // First, try to get exclusive paid-only characters (90% chance)
   const exclusiveCharacters = characters.filter(char => char.exclusive === true);
@@ -322,12 +319,12 @@ function megaRoll() {
   }
   
   // Check if user has enough coins
-  if (user.coins < 500) {
+  if ((user.coins || 0) < 500) {
     showNotification("Not enough coins! Need 500 coins for mega roll.", "error");
     return;
   }
   
-  user.coins -= 500;
+  user.coins = (user.coins || 0) - 500;
   
   // Do 10 paid rolls
   const results = [];
@@ -342,7 +339,7 @@ function megaRoll() {
       if (!existingChar) {
         user.characters.push(item);
       } else {
-        user.coins += 100; // Bonus for duplicates
+        user.coins = (user.coins || 0) + 100; // Bonus for duplicates
       }
     }
   }
@@ -381,7 +378,7 @@ function updateRollPanel() {
   if (coinsDisplay) coinsDisplay.textContent = (user.coins || 0).toLocaleString();
   
   // Show free spins for everyone
-  if (user.freeSpins > 0) {
+  if ((user.freeSpins || 0) > 0) {
     let freeSpinsDisplay = document.getElementById('free-spins-display');
     if (!freeSpinsDisplay) {
       freeSpinsDisplay = document.createElement('div');
@@ -537,46 +534,9 @@ function updateTradePanel() {
   // Trade panel update logic
 }
 
-function updateChatPanel() {
-  // Chat panel update logic
-}
-
 function updateShopPanel() {
   // Initialize shop with all items when panel is first opened
   updateShopItemsByCategory('all');
-}
-
-function updateQuestsPanel() {
-  // Quests panel update logic
-}
-
-function updateAchievementsPanel() {
-  // Achievements panel update logic
-}
-
-// Trade Tab Functions
-function switchTradeTab(tab) {
-  // Remove active class from all tab buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  // Hide all tab contents
-  document.querySelectorAll('.tab-content').forEach(content => {
-    content.classList.remove('active');
-  });
-  
-  // Add active class to selected tab button
-  const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
-  if (activeBtn) {
-    activeBtn.classList.add('active');
-  }
-  
-  // Show selected tab content
-  const activeContent = document.getElementById(`${tab}-trade`);
-  if (activeContent) {
-    activeContent.classList.add('active');
-  }
 }
 
 // Shop Category Functions
@@ -681,12 +641,12 @@ function buyItem(itemName, price) {
   const users = loadUsers();
   const user = users[currentUser];
   
-  if (!user || user.coins < price) {
+  if (!user || (user.coins || 0) < price) {
     showNotification('Not enough coins!', 'error');
     return;
   }
   
-  user.coins -= price;
+  user.coins = (user.coins || 0) - price;
   showNotification(`Purchased ${itemName}!`, 'success');
   
   saveUsers(users);
@@ -745,7 +705,7 @@ function sellItem() {
   const item = items[selectedInventoryItem];
   
   if (item) {
-    user.coins += item.value || 10;
+    user.coins = (user.coins || 0) + (item.value || 10);
     items.splice(selectedInventoryItem, 1);
     user.inventory = items;
     selectedInventoryItem = null;
@@ -775,10 +735,12 @@ function battleBoss(bossId) {
   const bossPower = boss.power;
   
   if (squadPower > bossPower) {
-    user.coins += boss.reward;
+    user.coins = (user.coins || 0) + boss.reward;
+    user.stats = user.stats || {};
     user.stats.battlesWon = (user.stats.battlesWon || 0) + 1;
     showNotification(`Victory! Earned ${boss.reward} coins!`, 'success');
   } else {
+    user.stats = user.stats || {};
     user.stats.battlesLost = (user.stats.battlesLost || 0) + 1;
     showNotification('Defeat! Try again with a stronger squad.', 'error');
   }
@@ -802,8 +764,6 @@ function showNotification(message, type = 'info') {
 
 function playSound(type) {
   if (!soundEnabled) return;
-  
-  // Simple sound simulation
   console.log(`Playing ${type} sound`);
 }
 
@@ -813,40 +773,44 @@ function handleLogout() {
   localStorage.removeItem('currentUser');
   showNotification('Logged out successfully', 'info');
   
-  // Redirect to login page
   setTimeout(() => {
     window.location.href = 'index.html';
   }, 1000);
 }
 
-// Initialize everything when DOM is loaded for game.html only
+// Safe event listener attachment
+function safeAddEventListener(elementId, event, handler) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.addEventListener(event, handler);
+  } else {
+    console.warn(`Element with ID '${elementId}' not found`);
+  }
+}
+
+// Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  // Check if user is logged in
   currentUser = localStorage.getItem('currentUser');
   
   if (!currentUser) {
-    // User not logged in, redirect to login page
     window.location.href = 'index.html';
     return;
   }
   
-  // Update player name
   const playerName = document.getElementById('player-name');
   if (playerName && currentUser) {
     playerName.textContent = currentUser;
   }
   
-  // Show roll panel by default
-  showPanel('roll');
-  
-  // Add event listeners
-  addEventListeners();
+  // Wait for all scripts to load before initializing
+  setTimeout(() => {
+    showPanel('roll');
+    addEventListeners();
+  }, 500);
 });
 
 function addEventListeners() {
-  // Logout button listener
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+  safeAddEventListener('logout-btn', 'click', handleLogout);
   
   // Navigation event listeners
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -860,22 +824,14 @@ function addEventListeners() {
   });
   
   // Game event listeners
-  const rollBtn = document.getElementById('roll-btn');
-  const paidRollBtn = document.getElementById('paid-roll-btn');
-  const megaRollBtn = document.getElementById('mega-roll-btn');
-  
-  if (rollBtn) rollBtn.addEventListener('click', rollItem);
-  if (paidRollBtn) paidRollBtn.addEventListener('click', paidRoll);
-  if (megaRollBtn) megaRollBtn.addEventListener('click', megaRoll);
+  safeAddEventListener('roll-btn', 'click', rollItem);
+  safeAddEventListener('paid-roll-btn', 'click', paidRoll);
+  safeAddEventListener('mega-roll-btn', 'click', megaRoll);
   
   // Inventory event listeners
-  const equipBtn = document.getElementById('equip-btn');
-  const inspectBtn = document.getElementById('inspect-btn');
-  const sellBtn = document.getElementById('sell-btn');
-  
-  if (equipBtn) equipBtn.addEventListener('click', equipItem);
-  if (inspectBtn) inspectBtn.addEventListener('click', inspectItem);
-  if (sellBtn) sellBtn.addEventListener('click', sellItem);
+  safeAddEventListener('equip-btn', 'click', equipItem);
+  safeAddEventListener('inspect-btn', 'click', inspectItem);
+  safeAddEventListener('sell-btn', 'click', sellItem);
   
   // Banner event listeners
   document.querySelectorAll('.banner-btn').forEach(btn => {
@@ -884,17 +840,6 @@ function addEventListeners() {
       const banner = btn.getAttribute('data-banner');
       if (banner) {
         switchBanner(banner);
-      }
-    });
-  });
-  
-  // Trade tab listeners
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tab = btn.getAttribute('data-tab');
-      if (tab) {
-        switchTradeTab(tab);
       }
     });
   });
@@ -929,5 +874,4 @@ function addEventListeners() {
       if (modal) modal.style.display = 'none';
     });
   });
-  
 }
