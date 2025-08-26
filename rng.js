@@ -1,7 +1,7 @@
-// Enhanced RNG System with More Variety and Better Mechanics
+
 
 const items = [
-  // LEGENDARY ITEMS (Ultra Rare)
+  
   {name: "Divine Crown of Eternity", rarity: "legendary", chance: 0.001, value: 1000, effect: "doubles_all_rewards"},
   {name: "Dragon's Heart Crystal", rarity: "legendary", chance: 0.002, value: 800, effect: "fire_aura"},
   {name: "Thunder God's Hammer", rarity: "legendary", chance: 0.003, value: 750, effect: "lightning_strike"},
@@ -406,6 +406,110 @@ function applyItemEffect(item, user) {
   saveUsers(users);
 }
 
+// Enhanced RNG System with Anime Integration
+function rollItem() {
+  // Get active effects for luck boost
+  const currentUser = localStorage.getItem('currentUser');
+  const users = loadUsers();
+  const user = users[currentUser];
+  let luckBoost = 0;
+  
+  if (user && user.activeEffects) {
+    const activeEffects = window.ANIME_BANNERS.getActiveEffects(user);
+    for (let [potionId, effect] of Object.entries(activeEffects)) {
+      if (potionId.startsWith('luck_boost_') && effect.boost) {
+        luckBoost += effect.boost;
+      }
+    }
+  }
+
+  // Combine regular items with anime characters
+  const allItems = [...items, ...window.ANIME_BANNERS.characters];
+  
+  // Apply luck boost to legendary chances
+  const adjustedItems = allItems.map(item => {
+    if (item.rarity === 'legendary') {
+      return { ...item, chance: item.chance + luckBoost };
+    }
+    return item;
+  });
+
+  const totalChance = adjustedItems.reduce((sum, item) => sum + item.chance, 0);
+  let random = Math.random() * totalChance;
+  
+  for (let item of adjustedItems) {
+    random -= item.chance;
+    if (random <= 0) {
+      return { ...item };
+    }
+  }
+  
+  return adjustedItems[0]; // Fallback
+}
+
+// Enhanced Shop Items with Potions
+const enhancedShopItems = [
+  ...shopItems,
+  ...window.ANIME_BANNERS.potions.map(potion => ({
+    ...potion,
+    type: 'potion',
+    description: potion.effect
+  }))
+];
+
+// Boss Battle System
+function generateBossBattle() {
+  return window.ANIME_BANNERS.getRandomBoss();
+}
+
+function calculateBossBattleResult(playerSquad, boss) {
+  let playerPower = 0;
+  
+  playerSquad.forEach(char => {
+    let charPower = char.power;
+    if (char.equippedAura) {
+      charPower += char.equippedAura.power;
+    }
+    playerPower += charPower;
+  });
+  
+  // Boss is much stronger
+  const bossPower = boss.power * 1.5;
+  const playerRoll = Math.random() * 30 - 15;
+  
+  playerPower += playerRoll;
+  
+  return {
+    playerPower: Math.max(0, playerPower),
+    bossPower: bossPower,
+    playerWins: playerPower > bossPower,
+    reward: playerPower > bossPower ? boss.reward : 0,
+    xpReward: playerPower > bossPower ? boss.xpReward : 0
+  };
+}
+
+// Enhanced AI Squad Generation
+function generateAISquad() {
+  return window.ANIME_BANNERS.generateAISquad();
+}
+
+function calculateBattleResult(playerSquad, aiSquad) {
+  return window.ANIME_BANNERS.calculateBattleResult(playerSquad, aiSquad);
+}
+
+// Potion Management
+function applyPotionEffect(potionId, user) {
+  return window.ANIME_BANNERS.applyPotionEffect(potionId, user);
+}
+
+function getActiveEffects(user) {
+  return window.ANIME_BANNERS.getActiveEffects(user);
+}
+
+function cleanupExpiredEffects(user) {
+  return window.ANIME_BANNERS.cleanupExpiredEffects(user);
+}
+
 // Export functions for use in other files
 window.RNG = {
   rollItem,
@@ -421,9 +525,16 @@ window.RNG = {
   updateLoginStreak,
   applyItemEffect,
   getCurrentSeason,
+  generateAISquad,
+  calculateBattleResult,
+  generateBossBattle,
+  calculateBossBattleResult,
+  applyPotionEffect,
+  getActiveEffects,
+  cleanupExpiredEffects,
   items,
   seasonalItems,
   mysteryBoxItems,
-  questTemplates,
-  shopItems
+  enhancedShopItems,
+  questTemplates
 };

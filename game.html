@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RNG Collect & Trade Pro - Game</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="game.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="game-container">
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="user-info">
+      <span id="player-name">Player</span>
+      <div class="stats">
+        <span>Level: <span id="level-display">1</span></span>
+        <span>XP: <span id="xp-display">0</span></span>
+        <span>💰 <span id="coins-display">100</span></span>
+      </div>
+    </div>
+    <button id="logout-btn" class="logout-btn">Logout</button>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="navigation-bar">
+    <button class="nav-btn active" data-panel="roll">🎲 Roll</button>
+    <button class="nav-btn" data-panel="inventory">🎒 Inventory</button>
+    <button class="nav-btn" data-panel="trade">🤝 Trade</button>
+    <button class="nav-btn" data-panel="chat">💬 Chat</button>
+    <button class="nav-btn" data-panel="shop">🛒 Shop</button>
+    <button class="nav-btn" data-panel="quests">📋 Quests</button>
+    <button class="nav-btn" data-panel="achievements">🏆 Achievements</button>
+    <button class="nav-btn" data-panel="characters">🎭 Characters</button>
+    <button class="nav-btn" data-panel="squad">⚔️ Squad</button>
+    <button class="nav-btn" data-panel="bosses">👹 Bosses</button>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Roll Panel -->
+    <section id="roll-panel" class="panel active">
+      <div class="panel-header">
+        <h2>🎲 Rolling Station</h2>
+      </div>
+      <div class="panel-content">
+        <div class="banner-selector">
+          <h3>🎭 Anime Characters</h3>
+          <div class="banner-buttons">
+            <button class="banner-btn active" data-banner="anime">🎭 Anime Characters</button>
+            <button class="banner-btn" data-banner="aura">✨ Aura Banner</button>
+          </div>
+        </div>
+        
+        <div class="roll-section">
+          <div class="roll-buttons">
+            <button id="roll-btn" class="roll-btn">🎲 Free Roll</button>
+            <button id="paid-roll-btn" class="paid-roll-btn">🌟 Paid Roll (50 coins)</button>
+            <button id="mega-roll-btn" class="mega-roll-btn">🎰 Mega Roll (500 coins)</button>
+          </div>
+          <div class="roll-info">
+            <p>🎲 <strong>Free Rolls:</strong> Get regular characters and auras</p>
+            <p>🌟 <strong>Paid Rolls:</strong> Get exclusive characters with higher rarity chances!</p>
+            <p>🎰 <strong>Mega Roll:</strong> 10 paid rolls at once for maximum value!</p>
+          </div>
+          <div id="roll-result" class="roll-result">
+            <p>Click roll to get started!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inventory Panel -->
+    <section id="inventory-panel" class="panel">
+      <div class="panel-header">
+        <h2>🎒 Inventory <span id="inventory-count">(0/50)</span></h2>
+      </div>
+      <div class="panel-content">
+        <div class="inventory-controls">
+          <input id="inventory-filter" class="filter-input" placeholder="Filter by name or rarity..." />
+          <div class="inventory-actions">
+            <button id="equip-btn" class="action-btn">⚔️ Equip</button>
+            <button id="inspect-btn" class="action-btn">🔍 Inspect</button>
+            <button id="sell-btn" class="action-btn">💰 Sell</button>
+          </div>
+        </div>
+        <ul id="inventory-list" class="inventory-list"></ul>
+        <div class="inventory-stats">
+          <div class="rarity-count">
+            <span class="rarity-badge common">Common: <span id="common-count">0</span></span>
+            <span class="rarity-badge rare">Rare: <span id="rare-count">0</span></span>
+            <span class="rarity-badge epic">Epic: <span id="epic-count">0</span></span>
+            <span class="rarity-badge legendary">Legendary: <span id="legendary-count">0</span></span>
+            <span class="rarity-badge mythical">Mythical: <span id="mythical-count">0</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trade Panel -->
+    <section id="trade-panel" class="panel">
+      <div class="panel-header">
+        <h2>🤝 Trading Hub</h2>
+      </div>
+      <div class="panel-content">
+        <div id="trade-tabs">
+          <button class="tab-btn active" data-tab="direct">Direct Trade</button>
+          <button class="tab-btn" data-tab="market">Market</button>
+          <button class="tab-btn" data-tab="history">History</button>
+        </div>
+        
+        <div id="direct-trade" class="tab-content active">
+          <label for="trade-user">Choose player</label>
+          <select id="trade-user"></select>
+          <div class="panel-row">
+            <button id="refresh-users">🔄 Refresh</button>
+            <button id="show-target-inv">👁️ Show Target</button>
+          </div>
+          <h3 class="small">Select item to trade</h3>
+          <ul id="trade-inventory"></ul>
+          <div class="panel-row">
+            <button id="send-trade">🎁 Send Gift</button>
+            <button id="request-trade">📤 Request Trade</button>
+          </div>
+        </div>
+        
+        <div id="market-trade" class="tab-content">
+          <h3 class="small">Market Listings</h3>
+          <div id="market-listings"></div>
+          <h3 class="small">List Your Item</h3>
+          <div class="panel-row">
+            <input id="list-price" type="number" placeholder="Price in coins" min="1" />
+            <button id="list-item">📋 List Item</button>
+          </div>
+        </div>
+        
+        <div id="history-trade" class="tab-content">
+          <h3 class="small">Trade History</h3>
+          <div id="trade-history"></div>
+        </div>
+        
+        <div id="trade-message" class="small muted"></div>
+      </div>
+    </section>
+
+    <!-- Chat Panel -->
+    <section id="chat-panel" class="panel">
+      <div class="panel-header">
+        <h2>💬 Global Chat</h2>
+      </div>
+      <div class="panel-content">
+        <div id="chat-box" class="chat-box"></div>
+        <div id="chat-row" class="chat-row">
+          <input id="chat-input" placeholder="Say something..." />
+          <button id="send-chat">📤 Send</button>
+        </div>
+        <div class="chat-controls">
+          <button id="clear-chat" class="small-btn">Clear Chat</button>
+          <button id="toggle-sound" class="small-btn">🔊 Sound</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shop Panel -->
+    <section id="shop-panel" class="panel">
+      <div class="panel-header">
+        <h2>🛒 Item Shop</h2>
+      </div>
+      <div class="panel-content">
+        <div class="shop-categories">
+          <button class="category-btn active" data-category="all">All Items</button>
+          <button class="category-btn" data-category="consumable">Consumables</button>
+          <button class="category-btn" data-category="upgrade">Upgrades</button>
+          <button class="category-btn" data-category="potions">Potions</button>
+        </div>
+        <div id="shop-items" class="shop-items"></div>
+      </div>
+    </section>
+
+    <!-- Quests Panel -->
+    <section id="quests-panel" class="panel">
+      <div class="panel-header">
+        <h2>📋 Daily Quests</h2>
+      </div>
+      <div class="panel-content">
+        <div class="quest-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="quest-progress-fill"></div>
+          </div>
+          <span id="quest-progress-text">0/4 Completed</span>
+        </div>
+        <div id="quest-list" class="quest-list"></div>
+      </div>
+    </section>
+
+    <!-- Achievements Panel -->
+    <section id="achievements-panel" class="panel">
+      <div class="panel-header">
+        <h2>🏆 Achievements</h2>
+      </div>
+      <div class="panel-content">
+        <div id="achievements-list" class="achievements-list"></div>
+      </div>
+    </section>
+
+    <!-- Characters Panel -->
+    <section id="characters-panel" class="panel">
+      <div class="panel-header">
+        <h2>🎭 Your Anime Characters</h2>
+      </div>
+      <div class="panel-content">
+        <div class="character-filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="common">Common</button>
+          <button class="filter-btn" data-filter="rare">Rare</button>
+          <button class="filter-btn" data-filter="epic">Epic</button>
+          <button class="filter-btn" data-filter="legendary">Legendary</button>
+          <button class="filter-btn" data-filter="mythical">Mythical</button>
+        </div>
+        <div id="characters-list" class="characters-list"></div>
+      </div>
+    </section>
+
+    <!-- Squad Panel -->
+    <section id="squad-panel" class="panel">
+      <div class="panel-header">
+        <h2>⚔️ Manage Your Squad</h2>
+      </div>
+      <div class="panel-content">
+        <div class="squad-container">
+          <div class="squad-slots">
+            <div class="squad-slot" data-slot="0">
+              <span class="slot-label">Slot 1</span>
+              <div class="character-placeholder">Empty</div>
+            </div>
+            <div class="squad-slot" data-slot="1">
+              <span class="slot-label">Slot 2</span>
+              <div class="character-placeholder">Empty</div>
+            </div>
+            <div class="squad-slot" data-slot="2">
+              <span class="slot-label">Slot 3</span>
+              <div class="character-placeholder">Empty</div>
+            </div>
+            <div class="squad-slot" data-slot="3">
+              <span class="slot-label">Slot 4</span>
+              <div class="character-placeholder">Empty</div>
+            </div>
+          </div>
+          <div class="available-characters">
+            <h3>Available Characters</h3>
+            <div id="available-characters-list"></div>
+          </div>
+        </div>
+        <div class="squad-preview">
+          <h3>Current Squad</h3>
+          <div id="squad-display"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bosses Panel -->
+    <section id="bosses-panel" class="panel">
+      <div class="panel-header">
+        <h2>👹 Boss Battles</h2>
+      </div>
+      <div class="panel-content">
+        <div id="bosses-list" class="bosses-list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modals -->
+<div id="shop-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>🛒 Item Shop</h2>
+    <div class="shop-categories">
+      <button class="category-btn active" data-category="all">All Items</button>
+      <button class="category-btn" data-category="consumable">Consumables</button>
+      <button class="category-btn" data-category="upgrade">Upgrades</button>
+      <button class="category-btn" data-category="potions">Potions</button>
+    </div>
+    <div id="shop-items"></div>
+    <button id="close-shop">Close</button>
+  </div>
+</div>
+
+<div id="quests-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>📋 Daily Quests</h2>
+    <div class="quest-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="quest-progress-fill"></div>
+      </div>
+      <span id="quest-progress-text">0/4 Completed</span>
+    </div>
+    <div id="quest-list"></div>
+    <button id="close-quests">Close</button>
+  </div>
+</div>
+
+<div id="achievements-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>🏆 Achievements</h2>
+    <div id="achievements-list"></div>
+    <button id="close-achievements">Close</button>
+  </div>
+</div>
+
+<div id="bosses-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>👹 Boss Battles</h2>
+    <div id="bosses-list"></div>
+    <button id="close-bosses">Close</button>
+  </div>
+</div>
+
+<div id="fusion-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>🔮 Item Fusion</h2>
+    <p>Select 3 items of the same rarity to fuse into a higher rarity item!</p>
+    <div id="fusion-slots"></div>
+    <div class="fusion-preview">
+      <div class="preview-item" id="fusion-preview">
+        <span>Fusion Result</span>
+      </div>
+    </div>
+    <div class="panel-row">
+      <button id="fusion-confirm">🔮 Fuse Items</button>
+      <button id="fusion-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="item-details-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2 id="item-details-title">Item Details</h2>
+    <div id="item-details-content"></div>
+    <button id="close-item-details">Close</button>
+  </div>
+</div>
+
+<div id="characters-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>🎭 Your Anime Characters</h2>
+    <div class="character-filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="common">Common</button>
+      <button class="filter-btn" data-filter="rare">Rare</button>
+      <button class="filter-btn" data-filter="epic">Epic</button>
+      <button class="filter-btn" data-filter="legendary">Legendary</button>
+      <button class="filter-btn" data-filter="mythical">Mythical</button>
+    </div>
+    <div id="characters-list"></div>
+    <button id="close-characters">Close</button>
+  </div>
+</div>
+
+<div id="squad-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>⚔️ Manage Your Squad</h2>
+    <div class="squad-container">
+      <div class="squad-slots">
+        <div class="squad-slot" data-slot="0">
+          <span class="slot-label">Slot 1</span>
+          <div class="character-placeholder">Empty</div>
+        </div>
+        <div class="squad-slot" data-slot="1">
+          <span class="slot-label">Slot 2</span>
+          <div class="character-placeholder">Empty</div>
+        </div>
+        <div class="squad-slot" data-slot="2">
+          <span class="slot-label">Slot 3</span>
+          <div class="character-placeholder">Empty</div>
+        </div>
+        <div class="squad-slot" data-slot="3">
+          <span class="slot-label">Slot 4</span>
+          <div class="character-placeholder">Empty</div>
+        </div>
+      </div>
+      <div class="available-characters">
+        <h3>Available Characters</h3>
+        <div id="available-characters-list"></div>
+      </div>
+    </div>
+    <button id="close-squad">Close</button>
+  </div>
+</div>
+
+<div id="battle-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content">
+    <h2>⚔️ Battle Result</h2>
+    <div class="battle-container">
+      <div class="player-squad">
+        <h3>Your Squad</h3>
+        <div id="player-squad-display" class="battle-squad-display"></div>
+      </div>
+      <div class="vs-section">
+        <span class="vs-text">VS</span>
+      </div>
+      <div class="ai-squad">
+        <h3>AI Squad</h3>
+        <div id="ai-squad-display" class="battle-squad-display"></div>
+      </div>
+    </div>
+    <div id="battle-log" class="battle-log"></div>
+    <button id="close-battle">Close</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="anime_banners.js"></script>
+<script src="rng.js"></script>
+<script src="game.js"></script>
+<script src="extra.js"></script>
+<script src="owner.js"></script>
+
+</body>
+</html>

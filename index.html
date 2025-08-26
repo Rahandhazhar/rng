@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RNG Collect & Trade Pro - Enhanced Edition</title>
+  <title>RNG Collect & Trade Pro - Login</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,205 +34,272 @@
       <span class="feature-icon">🏆</span>
       <span>Achievement System</span>
     </div>
+    <div class="feature-item">
+      <span class="feature-icon">🎭</span>
+      <span>Anime Characters</span>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">⚔️</span>
+      <span>Squad Battles</span>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">👹</span>
+      <span>Boss Battles</span>
+    </div>
   </div>
 </div>
 
-<div id="game-container" style="display:none;">
-  <div id="top-bar">
-    <div id="player-block">
-      <div id="player-name"></div>
-      <div id="equip-info">Equipped: <span id="equip-name">None</span></div>
-      <div id="stats-info">
-        <span>Level: <span id="level-display">1</span></span>
-        <span>XP: <span id="xp-display">0</span></span>
-        <span>Coins: <span id="coins-display">0</span></span>
-      </div>
-    </div>
-    <div id="top-actions">
-      <button id="btn-shop" class="extra-top-btn">🛒 Shop</button>
-      <button id="btn-daily" class="extra-top-btn">📅 Daily</button>
-      <button id="btn-quests" class="extra-top-btn">📋 Quests</button>
-      <button id="btn-achievements" class="extra-top-btn">🏆 Achievements</button>
-      <button id="logout-btn">🚪 Logout</button>
-    </div>
-  </div>
+<script>
+// Simple Login/Register System
+document.addEventListener('DOMContentLoaded', function() {
+  const loginBtn = document.getElementById('login-btn');
+  const registerBtn = document.getElementById('register-btn');
+  const authMessage = document.getElementById('auth-message');
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
 
-  <main id="main-grid">
-    <section id="roll-panel" class="card">
-      <h2>🎰 Spin the Reel</h2>
-      <div id="slot-window">
-        <div id="slot-reel"></div>
-        <div id="multiplier-display">1x</div>
-      </div>
-      <div id="roll-controls">
-        <button id="roll-btn">Roll (10 coins)</button>
-        <button id="mega-roll-btn">⚡ Mega Roll (50 coins)</button>
-        <div id="roll-result">Ready to roll</div>
-      </div>
-      <div class="hint">Roll for items. Mega Roll has better odds!</div>
-      <div class="roll-stats">
-        <div class="stat-item">
-          <span class="stat-label">Total Rolls:</span>
-          <span id="total-rolls">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Best Item:</span>
-          <span id="best-item">None</span>
-        </div>
-      </div>
-    </section>
+  // Load existing users
+  function loadUsers() {
+    try {
+      return JSON.parse(localStorage.getItem('users') || '{}');
+    } catch (e) {
+      console.error('Error loading users:', e);
+      return {};
+    }
+  }
 
-    <section id="inventory-panel" class="card">
-      <h2>🎒 Your Inventory <span id="inventory-count">(0/50)</span></h2>
-      <input id="inventory-filter" class="filter-input" placeholder="Filter by name or rarity..." />
-      <ul id="inventory-list"></ul>
-      <div class="panel-row">
-        <button id="equip-btn">⚔️ Equip</button>
-        <button id="inspect-btn">🔍 Inspect</button>
-        <button id="sell-btn">💰 Sell</button>
-        <button id="fusion-btn">🔮 Fuse Items</button>
-      </div>
-      <div class="inventory-stats">
-        <div class="rarity-count">
-          <span class="rarity-badge common">Common: <span id="common-count">0</span></span>
-          <span class="rarity-badge rare">Rare: <span id="rare-count">0</span></span>
-          <span class="rarity-badge epic">Epic: <span id="epic-count">0</span></span>
-          <span class="rarity-badge legendary">Legendary: <span id="legendary-count">0</span></span>
-        </div>
-      </div>
-    </section>
+  // Save users
+  function saveUsers(users) {
+    try {
+      localStorage.setItem('users', JSON.stringify(users));
+    } catch (e) {
+      console.error('Error saving users:', e);
+    }
+  }
 
-    <section id="trade-panel" class="card">
-      <h2>🤝 Trading Hub</h2>
-      <div id="trade-tabs">
-        <button class="tab-btn active" data-tab="direct">Direct Trade</button>
-        <button class="tab-btn" data-tab="market">Market</button>
-        <button class="tab-btn" data-tab="history">History</button>
-      </div>
-      
-      <div id="direct-trade" class="tab-content active">
-        <label for="trade-user">Choose player</label>
-        <select id="trade-user"></select>
-        <div class="panel-row">
-          <button id="refresh-users">🔄 Refresh</button>
-          <button id="show-target-inv">👁️ Show Target</button>
-        </div>
-        <h3 class="small">Select item to trade</h3>
-        <ul id="trade-inventory"></ul>
-        <div class="panel-row">
-          <button id="send-trade">🎁 Send Gift</button>
-          <button id="request-trade">📤 Request Trade</button>
-        </div>
-      </div>
-      
-      <div id="market-trade" class="tab-content">
-        <h3 class="small">Market Listings</h3>
-        <div id="market-listings"></div>
-        <h3 class="small">List Your Item</h3>
-        <div class="panel-row">
-          <input id="list-price" type="number" placeholder="Price in coins" min="1" />
-          <button id="list-item">📋 List Item</button>
-        </div>
-      </div>
-      
-      <div id="history-trade" class="tab-content">
-        <h3 class="small">Trade History</h3>
-        <div id="trade-history"></div>
-      </div>
-      
-      <div id="trade-message" class="small muted"></div>
-    </section>
+  // Create demo users if none exist
+  function initializeDemoUsers() {
+    const users = loadUsers();
+    
+    // Always ensure Owner exists
+    if (!users['Owner']) {
+      users['Owner'] = {
+        password: 'owner1122',
+        inventory: [],
+        equipped: null,
+        level: 100,
+        xp: 999999,
+        coins: 100,
+        maxInventory: 1000,
+        characters: [],
+        squad: [],
+        auras: [],
+        freeSpins: 50,
+        stats: {
+          totalRolls: 9999,
+          totalTrades: 9999,
+          totalSales: 9999,
+          legendaryFound: 999,
+          epicFound: 999,
+          rareFound: 999,
+          bestItem: null,
+          battlesWon: 9999,
+          battlesLost: 0
+        },
+        achievements: [],
+        tradeHistory: [],
+        rollHistory: [],
+        dailyStreak: 999,
+        lastLoginDate: null,
+        isOwner: true
+      };
+    }
+    
+    if (Object.keys(users).length === 1) { // Only Owner exists
+      users['Alice'] = {
+        password: 'a',
+        inventory: [],
+        equipped: null,
+        level: 1,
+        xp: 0,
+        coins: 100,
+        maxInventory: 50,
+        characters: [],
+        squad: [],
+        auras: [],
+        freeSpins: 10,
+        stats: {
+          totalRolls: 0,
+          totalTrades: 0,
+          totalSales: 0,
+          legendaryFound: 0,
+          epicFound: 0,
+          rareFound: 0,
+          bestItem: null,
+          battlesWon: 0,
+          battlesLost: 0
+        },
+        achievements: [],
+        tradeHistory: [],
+        rollHistory: [],
+        dailyStreak: 0,
+        lastLoginDate: null
+      };
+      users['Bob'] = {
+        password: 'b',
+        inventory: [],
+        equipped: null,
+        level: 1,
+        xp: 0,
+        coins: 100,
+        maxInventory: 50,
+        characters: [],
+        squad: [],
+        auras: [],
+        freeSpins: 10,
+        stats: {
+          totalRolls: 0,
+          totalTrades: 0,
+          totalSales: 0,
+          legendaryFound: 0,
+          epicFound: 0,
+          rareFound: 0,
+          bestItem: null,
+          battlesWon: 0,
+          battlesLost: 0
+        },
+        achievements: [],
+        tradeHistory: [],
+        rollHistory: [],
+        dailyStreak: 0,
+        lastLoginDate: null
+      };
+    }
+    
+    // Give 100 coins and 10 free spins to all users
+    Object.keys(users).forEach(username => {
+      if (users[username].coins < 100) {
+        users[username].coins = 100;
+      }
+      if (!users[username].freeSpins) {
+        users[username].freeSpins = 10;
+      }
+    });
+    
+    saveUsers(users);
+  }
 
-    <section id="chat-panel" class="card">
-      <h2>💬 Global Chat</h2>
-      <div id="chat-box"></div>
-      <div id="chat-row">
-        <input id="chat-input" placeholder="Say something..." />
-        <button id="send-chat">📤 Send</button>
-      </div>
-      <div class="chat-controls">
-        <button id="clear-chat" class="small-btn">Clear Chat</button>
-        <button id="toggle-sound" class="small-btn">🔊 Sound</button>
-      </div>
-    </section>
-  </main>
+  // Register function
+  registerBtn.addEventListener('click', function() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
 
-  <!-- Enhanced Modals -->
-  <div id="shop-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-content">
-      <h2>🛒 Item Shop</h2>
-      <div class="shop-categories">
-        <button class="category-btn active" data-category="all">All Items</button>
-        <button class="category-btn" data-category="consumable">Consumables</button>
-        <button class="category-btn" data-category="upgrade">Upgrades</button>
-      </div>
-      <div id="shop-items"></div>
-      <button id="close-shop">Close</button>
-    </div>
-  </div>
+    if (!username || !password) {
+      authMessage.textContent = 'Please fill in both fields';
+      authMessage.style.color = '#ef4444';
+      return;
+    }
 
-  <div id="quests-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-content">
-      <h2>📋 Daily Quests</h2>
-      <div class="quest-progress">
-        <div class="progress-bar">
-          <div class="progress-fill" id="quest-progress-fill"></div>
-        </div>
-        <span id="quest-progress-text">0/4 Completed</span>
-      </div>
-      <div id="quest-list"></div>
-      <button id="close-quests">Close</button>
-    </div>
-  </div>
+    if (username.length < 3) {
+      authMessage.textContent = 'Username must be at least 3 characters';
+      authMessage.style.color = '#ef4444';
+      return;
+    }
 
-  <div id="achievements-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-content">
-      <h2>🏆 Achievements</h2>
-      <div id="achievements-list"></div>
-      <button id="close-achievements">Close</button>
-    </div>
-  </div>
+    if (password.length < 3) {
+      authMessage.textContent = 'Password must be at least 3 characters';
+      authMessage.style.color = '#ef4444';
+      return;
+    }
 
-  <div id="fusion-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-content">
-      <h2>🔮 Item Fusion</h2>
-      <p>Select 3 items of the same rarity to fuse into a higher rarity item!</p>
-      <div id="fusion-slots"></div>
-      <div class="fusion-preview">
-        <div class="preview-item" id="fusion-preview">
-          <span>Fusion Result</span>
-        </div>
-      </div>
-      <div class="panel-row">
-        <button id="fusion-confirm">🔮 Fuse Items</button>
-        <button id="fusion-cancel">Cancel</button>
-      </div>
-    </div>
-  </div>
+    const users = loadUsers();
+    
+    if (users[username]) {
+      authMessage.textContent = 'Username already exists';
+      authMessage.style.color = '#ef4444';
+      return;
+    }
 
-  <div id="item-details-modal" class="modal-backdrop" style="display:none;">
-    <div class="modal-content">
-      <h2 id="item-details-title">Item Details</h2>
-      <div id="item-details-content"></div>
-      <button id="close-item-details">Close</button>
-    </div>
-  </div>
+    // Create new user
+    users[username] = {
+      password: password,
+      inventory: [],
+      equipped: null,
+      level: 1,
+      xp: 0,
+      coins: 100,
+      maxInventory: 50,
+      characters: [],
+      squad: [],
+      auras: [],
+      freeSpins: 10,
+      stats: {
+        totalRolls: 0,
+        totalTrades: 0,
+        totalSales: 0,
+        legendaryFound: 0,
+        epicFound: 0,
+        rareFound: 0,
+        bestItem: null,
+        battlesWon: 0,
+        battlesLost: 0
+      },
+      achievements: [],
+      tradeHistory: [],
+      rollHistory: [],
+      dailyStreak: 0,
+      lastLoginDate: null
+    };
 
-  <!-- Notification System -->
-  <div id="notification-container"></div>
+    saveUsers(users);
+    authMessage.textContent = 'Registration successful! You can now login.';
+    authMessage.style.color = '#10b981';
+    
+    // Clear form
+    usernameInput.value = '';
+    passwordInput.value = '';
+  });
 
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" style="display:none;">
-    <div class="loading-spinner"></div>
-    <p>Loading...</p>
-  </div>
+  // Login function
+  loginBtn.addEventListener('click', function() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
 
-  <!-- Background Particles -->
-  <div id="particles-container"></div>
-</div>
+    if (!username || !password) {
+      authMessage.textContent = 'Please fill in both fields';
+      authMessage.style.color = '#ef4444';
+      return;
+    }
 
-<script src="rng.js"></script>
-<script src="game.js"></script>
-<script src="extra.js"></script>
+    const users = loadUsers();
+    
+    if (!users[username] || users[username].password !== password) {
+      authMessage.textContent = 'Invalid username or password';
+      authMessage.style.color = '#ef4444';
+      return;
+    }
+
+    // Store current user
+    localStorage.setItem('currentUser', username);
+    
+    // Redirect to game
+    window.location.href = 'game.html';
+  });
+
+  // Handle Enter key
+  function handleEnter(event) {
+    if (event.key === 'Enter') {
+      loginBtn.click();
+    }
+  }
+
+  usernameInput.addEventListener('keypress', handleEnter);
+  passwordInput.addEventListener('keypress', handleEnter);
+
+  // Initialize demo users
+  initializeDemoUsers();
+});
+</script>
+
 </body>
 </html>

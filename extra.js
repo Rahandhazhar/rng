@@ -1,4 +1,4 @@
-// Enhanced Extra Features with Advanced Animations
+
 
 (function(){
     const STORAGE_KEY = "tradeRequests_v2";
